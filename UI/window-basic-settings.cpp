@@ -4783,6 +4783,14 @@ void OBSBasicSettings::FillSimpleRecordingValues()
 		ui->simpleOutRecEncoder->addItem(
 			ENCODER_STR("Hardware.AMD.H264"),
 			QString(SIMPLE_ENCODER_AMD));
+	if (EncoderAvailable("com.apple.videotoolbox.videoencoder.ave.avc")
+#ifndef __aarch64__
+	    && os_get_emulation_status() == true
+#endif
+	)
+		ui->simpleOutRecEncoder->addItem(
+			ENCODER_STR("Hardware.Apple.H264"),
+			QString(SIMPLE_ENCODER_APPLE_H264));
 #undef ADD_QUALITY
 }
 
@@ -4808,6 +4816,15 @@ void OBSBasicSettings::FillSimpleStreamingValues()
 		ui->simpleOutStrEncoder->addItem(
 			ENCODER_STR("Hardware.AMD.H264"),
 			QString(SIMPLE_ENCODER_AMD));
+	if (EncoderAvailable("com.apple.videotoolbox.videoencoder.ave.avc")
+#ifndef __aarch64__
+	    && os_get_emulation_status() == true
+#endif
+	)
+		if (__builtin_available(macOS 13.0, *))
+			ui->simpleOutStrEncoder->addItem(
+				ENCODER_STR("Hardware.Apple.H264"),
+				QString(SIMPLE_ENCODER_APPLE_H264));
 #undef ENCODER_STR
 }
 
@@ -4850,6 +4867,7 @@ void OBSBasicSettings::SimpleStreamingEncoderChanged()
 	QString preset;
 	const char *defaultPreset = nullptr;
 
+	ui->simpleOutAdvanced->setVisible(true);
 	ui->simpleOutPreset->clear();
 
 	if (encoder == SIMPLE_ENCODER_QSV) {
@@ -4921,6 +4939,9 @@ void OBSBasicSettings::SimpleStreamingEncoderChanged()
 
 		defaultPreset = "balanced";
 		preset = curAMDPreset;
+	} else if (encoder == SIMPLE_ENCODER_APPLE_H264) {
+		ui->simpleOutAdvanced->setChecked(false);
+		ui->simpleOutAdvanced->setVisible(false);
 	} else {
 		ui->simpleOutPreset->addItem("ultrafast", "ultrafast");
 		ui->simpleOutPreset->addItem("superfast", "superfast");
